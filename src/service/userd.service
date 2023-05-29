@@ -1,0 +1,18 @@
+# should be placed in:
+# /usr/local/lib/systemd/system
+# check paths with:
+# systemd-analyze unit-paths
+
+[Unit]
+Description=Game User Login Daemon
+After=network.target
+Wants=network.target
+
+[Service]
+ExecStart=/usr/local/sbin/userd
+ExecReload=/usr/local/sbin/userd
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
