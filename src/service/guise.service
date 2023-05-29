@@ -4,13 +4,13 @@
 # systemd-analyze unit-paths
 
 [Unit]
-Description=Game User Login Daemon
+Description=Guise User Login
 After=network.target
 Wants=network.target
 
 [Service]
-ExecStart=/usr/local/sbin/userd
-ExecReload=/usr/local/sbin/userd
+ExecStart=/usr/local/sbin/guised
+ExecReload=/usr/local/sbin/guised
 Type=simple
 Restart=always
 

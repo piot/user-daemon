@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(userd C)
+project(guised C)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -23,12 +23,12 @@ file(GLOB_RECURSE deps_src FOLLOW_SYMLINKS "${DEPS}*/*/src/lib/*.c")
 file(GLOB lib_src FOLLOW_SYMLINKS "*.c")
 
 add_executable(
-  userd
+  guised
   ${lib_src} ${deps_src}
   "${DEPS}piot/monotonic-time-c/src/platform/posix/monotonic_time_posix.c")
 
 target_compile_options(
-  userd
+  guised
   PRIVATE -Wall
           -Wextra
           -Wshadow
@@ -48,21 +48,21 @@ target_compile_options(
           -Werror=incompatible-function-pointer-types)
 
 if(COMPILER_CLANG)
-  target_compile_options(userd PRIVATE -Wmost -Weverything
+  target_compile_options(guised PRIVATE -Wmost -Weverything
                                        -Werror=missing-variable-declarations)
 endif()
 
-target_include_directories(userd PUBLIC ${DEPS}piot/user-server-lib/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/user-server-lib/src/include)
 
-target_include_directories(userd PUBLIC ${DEPS}piot/flood-c/src/include)
-target_include_directories(userd
+target_include_directories(guised PUBLIC ${DEPS}piot/flood-c/src/include)
+target_include_directories(guised
                            PUBLIC ${DEPS}piot/user-serialize-c/src/include)
-target_include_directories(userd PUBLIC ${DEPS}piot/clog/src/include)
-target_include_directories(userd PUBLIC ${DEPS}piot/tiny-libc/src/include)
-target_include_directories(userd PUBLIC ${DEPS}piot/imprint/src/include)
-target_include_directories(userd PUBLIC ${DEPS}piot/secure-random-c/src/include)
-target_include_directories(userd PUBLIC ${DEPS}piot/udp-server-c/src/include)
-target_include_directories(userd
+target_include_directories(guised PUBLIC ${DEPS}piot/clog/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/tiny-libc/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/imprint/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/secure-random-c/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/udp-server-c/src/include)
+target_include_directories(guised
                            PUBLIC ${DEPS}piot/monotonic-time-c/src/include)
 
-target_include_directories(userd PUBLIC ../include)
+target_include_directories(guised PUBLIC ../include)

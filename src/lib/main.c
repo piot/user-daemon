@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     g_clog.log = clog_console;
 
-    CLOG_OUTPUT("user daemon v%s starting up", USER_DAEMON_VERSION)
+    CLOG_OUTPUT("guise daemon v%s starting up", USER_DAEMON_VERSION)
 
     UserDaemon daemon;
 
