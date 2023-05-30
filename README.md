@@ -1,8 +1,8 @@
-# Guised - User Daemon
+# Guise - User Session Daemon
 
 ## Install
 
-Extract the release zip containing the `guised` linux executable and `guised.service` [systemd unit file](https://www.freedesktop.org/software/systemd/man/systemd.unit.html).
+Extract the release zip containing the `guised` linux executable and `guise.service` [systemd unit file](https://www.freedesktop.org/software/systemd/man/systemd.unit.html).
 
 ```console
 sudo chmod a+x guised
