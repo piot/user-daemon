@@ -52,11 +52,11 @@ if(COMPILER_CLANG)
                                        -Werror=missing-variable-declarations)
 endif()
 
-target_include_directories(guised PUBLIC ${DEPS}piot/user-server-lib/src/include)
+target_include_directories(guised PUBLIC ${DEPS}piot/guise-server-lib/src/include)
 
 target_include_directories(guised PUBLIC ${DEPS}piot/flood-c/src/include)
 target_include_directories(guised
-                           PUBLIC ${DEPS}piot/user-serialize-c/src/include)
+                           PUBLIC ${DEPS}piot/guise-serialize-c/src/include)
 target_include_directories(guised PUBLIC ${DEPS}piot/clog/src/include)
 target_include_directories(guised PUBLIC ${DEPS}piot/tiny-libc/src/include)
 target_include_directories(guised PUBLIC ${DEPS}piot/imprint/src/include)

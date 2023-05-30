@@ -2,17 +2,17 @@
  *  Copyright (c) Peter Bjorklund. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-#ifndef USER_DAEMON_DAEMON_H
-#define USER_DAEMON_DAEMON_H
+#ifndef GUISE_DAEMON_DAEMON_H
+#define GUISE_DAEMON_DAEMON_H
 
-#include <user-server-lib/server.h>
+#include <guise-server-lib/server.h>
 #include <udp-server/udp_server.h>
 
-typedef struct UserDaemon {
-    UserServer server;
+typedef struct GuiseDaemon {
+    GuiseServer server;
     UdpServerSocket socket;
-} UserDaemon;
+} GuiseDaemon;
 
-int userDaemonInit(UserDaemon* self);
+int guiseDaemonInit(GuiseDaemon* self);
 
 #endif

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 #include "daemon.h"
 
-int userDaemonInit(UserDaemon* self)
+int guiseDaemonInit(GuiseDaemon* self)
 {
     int err = udpServerStartup();
     if (err < 0) {

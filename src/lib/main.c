@@ -9,7 +9,8 @@
 #include <flood/in_stream.h>
 #include <flood/out_stream.h>
 #include <imprint/default_setup.h>
-#include <user-server-lib/utils.h>
+
+#include <guise-server-lib/utils.h>
 
 #if !TORNADO_OS_WINDOWS
 #include <unistd.h>
@@ -36,12 +37,13 @@ int main(int argc, char *argv[])
     (void)argv;
 
     g_clog.log = clog_console;
+    g_clog.level = CLOG_TYPE_DEBUG;
 
     CLOG_OUTPUT("guise daemon v%s starting up", USER_DAEMON_VERSION)
 
-    UserDaemon daemon;
+    GuiseDaemon daemon;
 
-    int err = userDaemonInit(&daemon);
+    int err = guiseDaemonInit(&daemon);
     if (err < 0)
     {
         return err;
@@ -50,14 +52,14 @@ int main(int argc, char *argv[])
     UdpServerSocketSendToAddress socketSendToAddress;
     socketSendToAddress.serverSocket = &daemon.socket;
 
-    UserServerSendDatagram sendDatagram;
+    GuiseServerSendDatagram sendDatagram;
     sendDatagram.send = sendToAddress;
     sendDatagram.self = &socketSendToAddress;
 
-    UserServerResponse response;
+    GuiseServerResponse response;
     response.sendDatagram = sendDatagram;
 
-    UserServer server;
+    GuiseServer server;
 
     ImprintDefaultSetup memory;
     imprintDefaultSetupInit(&memory, 16 * 1024 * 1024);
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
     serverLog.constantPrefix = "ClvServer";
     serverLog.config = &g_clog;
 
-    userServerInit(&server, &memory.tagAllocator.info, serverLog);
+    guiseServerInit(&server, &memory.tagAllocator.info, serverLog);
 
 #define UDP_MAX_SIZE (1200)
 
@@ -101,7 +103,7 @@ int main(int argc, char *argv[])
 #if 0
             nimbleSerializeDebugHex("received", buf, size);
 #endif
-            errorCode = userServerFeed(&server, &address, buf, size, &response);
+            errorCode = guiseServerFeed(&server, &address, buf, size, &response);
             if (errorCode < 0)
             {
                 CLOG_WARN("clvServerFeed: error %d", errorCode);
