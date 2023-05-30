@@ -2,50 +2,136 @@
  *  Copyright (c) Peter Bjorklund. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-#include <clog/clog.h>
-#include <clog/console.h>
 #include "daemon.h"
 #include "version.h"
+#include <clog/console.h>
 #include <flood/in_stream.h>
 #include <flood/out_stream.h>
+#include <flood/text_in_stream.h>
+#include <guise-serialize/parse_text.h>
+#include <guise-server-lib/user.h>
 #include <imprint/default_setup.h>
 
 #include <guise-server-lib/utils.h>
 
 #if !TORNADO_OS_WINDOWS
+#include <errno.h>
 #include <unistd.h>
 #endif
 
 clog_config g_clog;
 
-typedef struct UdpServerSocketSendToAddress
-{
-    struct sockaddr_in *sockAddrIn;
-    UdpServerSocket *serverSocket;
+typedef struct UdpServerSocketSendToAddress {
+    struct sockaddr_in* sockAddrIn;
+    UdpServerSocket* serverSocket;
 } UdpServerSocketSendToAddress;
 
-static int sendToAddress(void *self_, const NetworkAddress *address, const uint8_t *buf, size_t count)
+static int sendToAddress(void* self_, const NetworkAddress* address, const uint8_t* buf, size_t count)
 {
-    UdpServerSocketSendToAddress *self = (UdpServerSocketSendToAddress *)self_;
+    UdpServerSocketSendToAddress* self = (UdpServerSocketSendToAddress*) self_;
 
     return udpServerSend(self->serverSocket, buf, count, self->sockAddrIn);
 }
 
-int main(int argc, char *argv[])
+static int readLineFeed(FldTextInStream* stream)
 {
-    (void)argc;
-    (void)argv;
+    while (1) {
+        char ch;
+        int err = fldTextInStreamReadCh(stream, &ch);
+        if (err < 0) {
+            return err;
+        }
+        if (ch == 10) {
+            return 0;
+        }
+    }
+}
+
+static int readOneUserLine(GuiseUsers* users, FldTextInStream* stream)
+{
+    GuiseSerializeUserId userId;
+    int userErr = guiseTextStreamReadUserId(stream, &userId);
+    if (userErr < 0) {
+        return userErr;
+    }
+
+    if (userId == 0) {
+        return -1;
+    }
+
+    GuiseUser* user;
+    int err = guiseUsersCreate(users, userId, &user);
+    if (err < 0) {
+        return err;
+    }
+
+    int characterCount = guiseTextStreamReadUserName(stream, user->name, 32);
+    if (characterCount < 3) {
+        return -44;
+    }
+
+    int hashErr = guiseTextStreamReadPasswordHash(stream, &user->passwordHash);
+    if (hashErr < 0) {
+        return hashErr;
+    }
+    if (user->passwordHash == 0) {
+        return -48;
+    }
+
+    CLOG_C_VERBOSE(&users->log, "Read User '%s' (%llu) (ends with %02x)", user->name, user->id,
+                   user->passwordHash & 0xff)
+
+    return 0;
+}
+
+static int readUsersFile(GuiseUsers* users)
+{
+    CLOG_C_DEBUG(&users->log, "reading users file")
+    FILE* fp = fopen("users.txt", "r");
+    if (fp == 0) {
+        CLOG_ERROR("could not find users.txt")
+        return -4;
+    }
+
+    size_t usersRead = 0;
+    while (1) {
+        char line[1024];
+        char* ptr = fgets(line, 1024, fp);
+        if (ptr == 0) {
+            CLOG_C_DEBUG(&users->log, "read (%zu) users", usersRead)
+            return 0;
+        }
+
+        FldTextInStream textInStream;
+        FldInStream inStream;
+
+        fldInStreamInit(&inStream, line, tc_strlen(line));
+        fldTextInStreamInit(&textInStream, &inStream);
+
+        int lineErr = readOneUserLine(users, &textInStream);
+        if (lineErr < 0) {
+            fclose(fp);
+            return lineErr;
+        }
+        usersRead++;
+    }
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    (void) argc;
+    (void) argv;
 
     g_clog.log = clog_console;
-    g_clog.level = CLOG_TYPE_DEBUG;
+    g_clog.level = CLOG_TYPE_VERBOSE;
 
     CLOG_OUTPUT("guise daemon v%s starting up", USER_DAEMON_VERSION)
 
     GuiseDaemon daemon;
 
     int err = guiseDaemonInit(&daemon);
-    if (err < 0)
-    {
+    if (err < 0) {
         return err;
     }
 
@@ -71,6 +157,7 @@ int main(int argc, char *argv[])
     serverLog.config = &g_clog;
 
     guiseServerInit(&server, &memory.tagAllocator.info, serverLog);
+    readUsersFile(&server.guiseUsers);
 
 #define UDP_MAX_SIZE (1200)
 
@@ -87,16 +174,12 @@ int main(int argc, char *argv[])
 
     CLOG_OUTPUT("ready for incoming UDP packets")
 
-    while (true)
-    {
+    while (true) {
         size = UDP_MAX_SIZE;
         errorCode = udpServerReceive(&daemon.socket, buf, &size, &address);
-        if (errorCode < 0)
-        {
+        if (errorCode < 0) {
             CLOG_WARN("problem with receive %d", errorCode);
-        }
-        else
-        {
+        } else {
             socketSendToAddress.sockAddrIn = &address;
 
             fldOutStreamRewind(&outStream);
@@ -104,8 +187,7 @@ int main(int argc, char *argv[])
             nimbleSerializeDebugHex("received", buf, size);
 #endif
             errorCode = guiseServerFeed(&server, &address, buf, size, &response);
-            if (errorCode < 0)
-            {
+            if (errorCode < 0) {
                 CLOG_WARN("clvServerFeed: error %d", errorCode);
             }
         }

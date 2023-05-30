@@ -9,7 +9,6 @@
 #include <udp-server/udp_server.h>
 
 typedef struct GuiseDaemon {
-    GuiseServer server;
     UdpServerSocket socket;
 } GuiseDaemon;
 
