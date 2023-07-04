@@ -16,3 +16,4 @@ CMakeCache.txt
 src/lib/userd
 src/lib/guised
 src/lib/users.txt
+src/lib/guise-daemon
