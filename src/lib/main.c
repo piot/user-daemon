@@ -11,15 +11,16 @@
 #include <guise-serialize/parse_text.h>
 #include <guise-server-lib/user.h>
 #include <imprint/default_setup.h>
-
 #include <guise-server-lib/utils.h>
+#include <inttypes.h>
 
-#if !TORNADO_OS_WINDOWS
+#if !defined TORNADO_OS_WINDOWS
 #include <errno.h>
 #include <unistd.h>
 #endif
 
 clog_config g_clog;
+char g_clog_temp_str[CLOG_TEMP_STR_SIZE];
 
 typedef struct UdpServerSocketSendToAddress {
     struct sockaddr_in* sockAddrIn;
@@ -28,23 +29,10 @@ typedef struct UdpServerSocketSendToAddress {
 
 static int sendToAddress(void* self_, const NetworkAddress* address, const uint8_t* buf, size_t count)
 {
+    (void) address;
     UdpServerSocketSendToAddress* self = (UdpServerSocketSendToAddress*) self_;
 
     return udpServerSend(self->serverSocket, buf, count, self->sockAddrIn);
-}
-
-static int readLineFeed(FldTextInStream* stream)
-{
-    while (1) {
-        char ch;
-        int err = fldTextInStreamReadCh(stream, &ch);
-        if (err < 0) {
-            return err;
-        }
-        if (ch == 10) {
-            return 0;
-        }
-    }
 }
 
 static int readOneUserLine(GuiseUsers* users, FldTextInStream* stream)
@@ -78,8 +66,8 @@ static int readOneUserLine(GuiseUsers* users, FldTextInStream* stream)
         return -48;
     }
 
-    CLOG_C_VERBOSE(&users->log, "Read User '%s' (%llu) (ends with %02x)", user->name, user->id,
-                   user->passwordHash & 0xff)
+    CLOG_C_VERBOSE(&users->log, "Read User '%s' (%" PRIx64 ") (ends with %02x)", user->name, user->id,
+                   (uint8_t) user->passwordHash & 0xff)
 
     return 0;
 }
@@ -90,10 +78,13 @@ static int readUsersFile(GuiseUsers* users)
     FILE* fp = fopen("users.txt", "r");
     if (fp == 0) {
         CLOG_ERROR("could not find users.txt")
-        return -4;
+        //return -4;
     }
 
+#if defined CONFIGURATION_DEBUG
     size_t usersRead = 0;
+#endif
+
     while (1) {
         char line[1024];
         char* ptr = fgets(line, 1024, fp);
@@ -105,7 +96,7 @@ static int readUsersFile(GuiseUsers* users)
         FldTextInStream textInStream;
         FldInStream inStream;
 
-        fldInStreamInit(&inStream, line, tc_strlen(line));
+        fldInStreamInit(&inStream, (const uint8_t*) line, tc_strlen(line));
         fldTextInStreamInit(&textInStream, &inStream);
 
         int lineErr = readOneUserLine(users, &textInStream);
@@ -113,9 +104,10 @@ static int readUsersFile(GuiseUsers* users)
             fclose(fp);
             return lineErr;
         }
+#if defined CONFIGURATION_DEBUG
         usersRead++;
+#endif
     }
-    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -153,7 +145,7 @@ int main(int argc, char* argv[])
     // TODO:    ConclaveSerializeVersion applicationVersion = {0x10, 0x20, 0x30};
 
     Clog serverLog;
-    serverLog.constantPrefix = "ClvServer";
+    serverLog.constantPrefix = "GuiseServer";
     serverLog.config = &g_clog;
 
     guiseServerInit(&server, &memory.tagAllocator.info, serverLog);
@@ -162,7 +154,6 @@ int main(int argc, char* argv[])
 #define UDP_MAX_SIZE (1200)
 
     uint8_t buf[UDP_MAX_SIZE];
-    size_t size;
     struct sockaddr_in address;
     int errorCode;
 
@@ -175,10 +166,9 @@ int main(int argc, char* argv[])
     CLOG_OUTPUT("ready for incoming UDP packets")
 
     while (true) {
-        size = UDP_MAX_SIZE;
-        errorCode = udpServerReceive(&daemon.socket, buf, &size, &address);
-        if (errorCode < 0) {
-            CLOG_WARN("problem with receive %d", errorCode);
+        ssize_t receivedOctetCount = udpServerReceive(&daemon.socket, buf, UDP_MAX_SIZE, &address);
+        if (receivedOctetCount < 0) {
+            CLOG_WARN("problem with receive %zd", receivedOctetCount);
         } else {
             socketSendToAddress.sockAddrIn = &address;
 
@@ -186,14 +176,13 @@ int main(int argc, char* argv[])
 #if 0
             nimbleSerializeDebugHex("received", buf, size);
 #endif
-            errorCode = guiseServerFeed(&server, &address, buf, size, &response);
+            errorCode = guiseServerFeed(&server, &address, buf, (size_t) receivedOctetCount, &response);
             if (errorCode < 0) {
-                CLOG_WARN("clvServerFeed: error %d", errorCode);
+                CLOG_WARN("guiseServerFeed: error %d", errorCode);
             }
         }
     }
 
-    imprintDefaultSetupDestroy(&memory);
-
-    return 0;
+    // imprintDefaultSetupDestroy(&memory);
+    // return 0;
 }
