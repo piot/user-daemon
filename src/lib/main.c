@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
     while (true) {
         ssize_t receivedOctetCount = udpServerReceive(&daemon.socket, buf, UDP_MAX_SIZE, &address);
         if (receivedOctetCount < 0) {
-            CLOG_WARN("problem with receive %zd", receivedOctetCount);
+            CLOG_WARN("problem with receive %zd", receivedOctetCount)
         } else {
             socketSendToAddress.sockAddrIn = &address;
 
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
 #endif
             errorCode = guiseServerFeed(&server, &address, buf, (size_t) receivedOctetCount, &response);
             if (errorCode < 0) {
-                CLOG_WARN("guiseServerFeed: error %d", errorCode);
+                CLOG_WARN("guiseServerFeed: error %d", errorCode)
             }
         }
     }
