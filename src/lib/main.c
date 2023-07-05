@@ -10,8 +10,8 @@
 #include <flood/text_in_stream.h>
 #include <guise-serialize/parse_text.h>
 #include <guise-server-lib/user.h>
-#include <imprint/default_setup.h>
 #include <guise-server-lib/utils.h>
+#include <imprint/default_setup.h>
 #include <inttypes.h>
 
 #if !defined TORNADO_OS_WINDOWS
@@ -37,36 +37,29 @@ static int sendToAddress(void* self_, const NetworkAddress* address, const uint8
 
 static int readOneUserLine(GuiseUsers* users, FldTextInStream* stream)
 {
-    GuiseSerializeUserId userId;
-    int userErr = guiseTextStreamReadUserId(stream, &userId);
+    GuiseSerializeUserInfo userInfo;
+    int userErr = guiseTextStreamReadUser(stream, &userInfo);
     if (userErr < 0) {
         return userErr;
     }
-
-    if (userId == 0) {
+    if (userInfo.userId == 0) {
         return -1;
+    }
+    if (userInfo.passwordHash == 0) {
+        return -48;
     }
 
     GuiseUser* user;
-    int err = guiseUsersCreate(users, userId, &user);
+    int err = guiseUsersCreate(users, userInfo.userId, &user);
     if (err < 0) {
         return err;
     }
 
-    int characterCount = guiseTextStreamReadUserName(stream, user->name, 32);
-    if (characterCount < 3) {
-        return -44;
-    }
+    user->name = userInfo.userName;
+    user->passwordHash = userInfo.passwordHash;
+    user->roles = userInfo.roles;
 
-    int hashErr = guiseTextStreamReadPasswordHash(stream, &user->passwordHash);
-    if (hashErr < 0) {
-        return hashErr;
-    }
-    if (user->passwordHash == 0) {
-        return -48;
-    }
-
-    CLOG_C_VERBOSE(&users->log, "Read User '%s' (%" PRIx64 ") (ends with %02x)", user->name, user->id,
+    CLOG_C_VERBOSE(&users->log, "Read User '%s' (%" PRIx64 ") (ends with %02x)", user->name.utf8, user->id,
                    (uint8_t) user->passwordHash & 0xff)
 
     return 0;
@@ -78,7 +71,7 @@ static int readUsersFile(GuiseUsers* users)
     FILE* fp = fopen("users.txt", "r");
     if (fp == 0) {
         CLOG_ERROR("could not find users.txt")
-        //return -4;
+        // return -4;
     }
 
 #if defined CONFIGURATION_DEBUG
