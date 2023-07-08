@@ -47,21 +47,33 @@ systemctl start guise
 Must be a `users.txt` in the current directory when the daemon starts. One line for each user with the format:
 
 ```txt
-ID NAME PASSWORD_HASH
+ID NAME PASSWORD_HASH ROLES
 ```
 
-* **ID**. uint64 integer in base 10 that can fit inside an unsigned 64 bit, minimum of one character and not zero. (example `936597104`). Any number works as long as it is unique within the file. You can generate a number from:
+* **`ID`**. Integer in base 10 that can fit inside an unsigned 64 bit, minimum of one character and not zero. (example `936597104`). Any number works as long as it is unique within the file. You can generate a number from:
 
     ```console
     od -vAn -N8 -tu8 < /dev/urandom
     ```
 
-* **NAME**. up to 32 characters of an utf8 encoded string.
-* **PASSWORD_HASH**. Secret private password hash, must be exactly 16 lower case hexadecimal characters (example `9a55f43afb476c91`). It is recommended to generate it using SHA-256:
+* **`NAME`**. up to 32 characters of an utf8 encoded string.
+* **`PASSWORD_HASH`**. Secret private password hash, must be exactly 16 lower case hexadecimal characters (example `9a55f43afb476c91`). It is recommended to generate it using SHA-256:
 
     ```console
     shasum -a 256 <<< "MYPASSWORD" | cut -c -16
     ```
+
+* **`RULES`**. Authorized rules:
+  * `-`: no role
+  * `q`: query
+  * `l`: listen
+
+### Example `users.txt`:
+
+```txt
+12009295865568971531 YourUsername 9a55f43afb476c91 ql
+```
+
 
 ## Useful commands
 
