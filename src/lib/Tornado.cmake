@@ -8,7 +8,6 @@ macro(set_local_and_parent NAME VALUE)
 endmacro()
 
 function(set_tornado targetName)
-
   target_compile_features(${targetName} PUBLIC c_std_99)
   set_local_and_parent(CMAKE_C_EXTENSIONS false)
 
@@ -102,23 +101,12 @@ function(set_tornado targetName)
 
   # ----- Set Compile Definitions based on build type and operating system
 
-  if(APPLE)
-    target_compile_definitions(${targetName} PRIVATE TORNADO_OS_MACOS)
-    set_local_and_parent(OS_MACOS 1)
-  elseif(UNIX)
-    target_compile_definitions(${targetName} PRIVATE TORNADO_OS_LINUX)
-    set_local_and_parent(OS_LINUX 1)
-  elseif(WIN32)
-    target_compile_definitions(${targetName} PRIVATE TORNADO_OS_WINDOWS)
-    set_local_and_parent(OS_WINDOWS 1)
-  endif()
-
-  if(OS_LINUX)
-    message("Linux Detected!")
-    target_compile_definitions(${targetName} PRIVATE TORNADO_OS_LINUX)
-  elseif(OS_MACOS)
+  if(OS_MACOS)
     message("MacOS detected!")
     target_compile_definitions(${targetName} PRIVATE TORNADO_OS_MACOS)
+  elseif(OS_LINUX)
+    message("Linux Detected!")
+    target_compile_definitions(${targetName} PRIVATE TORNADO_OS_LINUX)
   elseif(OS_WINDOWS)
     message("Windows detected!")
     target_compile_definitions(${targetName} PRIVATE TORNADO_OS_WINDOWS)
