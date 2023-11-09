@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Peter Bjorklund. All rights reserved.
+ *  Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/user-daemon
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 #include "daemon.h"
@@ -115,10 +115,14 @@ int main(int argc, char* argv[])
 
     GuiseDaemon daemon;
 
-    int err = guiseDaemonInit(&daemon);
+    const uint16_t PORT = 27004;
+
+    int err = guiseDaemonInit(&daemon, PORT);
     if (err < 0) {
         return err;
     }
+
+    CLOG_OUTPUT("listening on port %hu", PORT)
 
     UdpServerSocketSendToAddress socketSendToAddress;
     socketSendToAddress.serverSocket = &daemon.socket;
