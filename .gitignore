@@ -13,7 +13,5 @@ Makefile
 *.a
 cmake_install.cmake
 CMakeCache.txt
-src/lib/userd
-src/lib/guised
-src/lib/users.txt
 src/lib/guise-daemon
+users.txt

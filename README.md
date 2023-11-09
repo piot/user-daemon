@@ -1,4 +1,13 @@
-# Guise - User Session Daemon
+<div align="center">
+    <img src="https://raw.githubusercontent.com/piot/guise/main/docs/images/logo.svg" width="128" />
+</div>
+
+# Guise Daemon
+
+Very basic Authentication Daemon. Used by [Relay Daemon](https://github.com/piot/relay-daemon) and [Conclave](https://github.com/piot/conclave).
+
+> [!IMPORTANT]
+> Designed for internal development and testing, do not use in production.
 
 ## Install
 
